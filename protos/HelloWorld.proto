@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "com.venkatasudha.entities";
+option java_outer_classname = "HelloWorld";
+option objc_class_prefix = "HLW";
+
+package entities;
+
+service Greeter {
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+}
+
+message HelloRequest {
+  string requestMessage = 1;
+}
+
+message HelloReply {
+  string replyMessage = 1;
+}

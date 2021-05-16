@@ -23,35 +23,47 @@ file(GLOB PROTOBUF_DEFINITION_FILES "protos/**.proto")
 foreach (PROTO_FILE ${PROTOBUF_DEFINITION_FILES})
     get_filename_component(PROTO_NAME ${PROTO_FILE} NAME)
     string(REPLACE ".proto" "" PROTO_NAME ${PROTO_NAME})
-    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME})
-    set(PROTO_FILES_PATH ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME})
 
-    message("Processing ${PROTO_NAME} proto to ${PROTO_FILES_PATH}")
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME}/cpp)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME}/java)
+    file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME}/python)
 
-    get_filename_component(hw_proto ${PROTO_FILE} ABSOLUTE)
-    get_filename_component(hw_proto_path "${hw_proto}" PATH)
+    set(PROTO_FILES_PATH_CPP ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME}/cpp)
+    set(PROTO_FILES_PATH_JAVA ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME}/java)
+    set(PROTO_FILES_PATH_PYTHON ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME}/python)
+
+
+    message("Processing ${PROTO_NAME} proto to ${CMAKE_CURRENT_BINARY_DIR}/proto-gen/${PROTO_NAME}")
+
+    get_filename_component(HW_PROTO ${PROTO_FILE} ABSOLUTE)
+    get_filename_component(HW_PROTO_PATH "${HW_PROTO}" PATH)
 
     # Generated sources
-    set(HW_PROTO_SRCS "${PROTO_FILES_PATH}/${PROTO_NAME}.pb.cc")
-    set(HW_PROTO_HDRS "${PROTO_FILES_PATH}/${PROTO_NAME}.pb.h")
-    set(HW_GRPC_SRCS "${PROTO_FILES_PATH}/${PROTO_NAME}.grpc.pb.cc")
-    set(HW_GRPC_HDRS "${PROTO_FILES_PATH}/${PROTO_NAME}.grpc.pb.h")
+    set(HW_PROTO_SRCS "${PROTO_FILES_PATH_CPP}/${PROTO_NAME}.pb.cc")
+    set(HW_PROTO_HDRS "${PROTO_FILES_PATH_CPP}/${PROTO_NAME}.pb.h")
+    set(HW_GRPC_SRCS "${PROTO_FILES_PATH_CPP}/${PROTO_NAME}.grpc.pb.cc")
+    set(HW_GRPC_HDRS "${PROTO_FILES_PATH_CPP}/${PROTO_NAME}.grpc.pb.h")
 
     add_custom_command(
             OUTPUT "${HW_PROTO_SRCS}" "${HW_PROTO_HDRS}" "${HW_GRPC_SRCS}" "${HW_GRPC_HDRS}"
             COMMAND ${_PROTOBUF_PROTOC}
-            ARGS --grpc_out "${PROTO_FILES_PATH}"
-            --cpp_out "${PROTO_FILES_PATH}"
-            -I "${hw_proto_path}"
+
+            ARGS
+            --proto_path "${HW_PROTO_PATH}"
+            --grpc_out "${PROTO_FILES_PATH_CPP}"
+            --cpp_out "${PROTO_FILES_PATH_CPP}"
+            --java_out "${PROTO_FILES_PATH_JAVA}"
+            --python_out "${PROTO_FILES_PATH_PYTHON}"
             --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-            "${hw_proto}"
-            DEPENDS "${hw_proto}")
+            "${HW_PROTO}"
+
+            DEPENDS "${HW_PROTO}")
 
     LIST(APPEND PROTO_SRCS ${HW_PROTO_SRCS})
     LIST(APPEND PROTO_HDRS ${HW_PROTO_HDRS})
     LIST(APPEND GRPC_SRCS ${HW_GRPC_SRCS})
     LIST(APPEND GRPC_HDRS ${HW_GRPC_HDRS})
-    LIST(APPEND PROTO_HEADERS ${PROTO_FILES_PATH})
+    LIST(APPEND PROTO_HEADERS ${PROTO_FILES_PATH_CPP})
 endforeach ()
 
 # Include generated *.pb.h files
